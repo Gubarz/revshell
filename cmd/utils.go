@@ -1,12 +1,15 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/base64"
+	"encoding/binary"
 	"fmt"
 	"net"
 	"net/url"
 	"slices"
 	"strings"
+	"unicode/utf16"
 )
 
 type IPSource struct {
@@ -34,7 +37,12 @@ func getCommand(params CommandParams) string {
 			cmd.Command = strings.ReplaceAll(cmd.Command, "{shell}", shell)
 
 			if params.Name == "powershell" && params.Method == "base64" {
-				b64 := base64.StdEncoding.EncodeToString([]byte(cmd.Command))
+				utf16le := utf16.Encode([]rune(cmd.Command))
+				buf := new(bytes.Buffer)
+				for _, r := range utf16le {
+					_ = binary.Write(buf, binary.LittleEndian, r)
+				}
+				b64 := base64.StdEncoding.EncodeToString(buf.Bytes())
 				cmd.Command = fmt.Sprintf("powershell -e %s", b64)
 			}
 
