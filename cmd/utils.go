@@ -36,7 +36,7 @@ func getCommand(params CommandParams) string {
 			cmd.Command = strings.ReplaceAll(cmd.Command, "{port}", port)
 			cmd.Command = strings.ReplaceAll(cmd.Command, "{shell}", shell)
 
-			if params.Name == "powershell" && params.Method == "base64" {
+			if params.Name == "powershell" && (params.Method == "base64" || params.Method == "5") {
 				utf16le := utf16.Encode([]rune(cmd.Command))
 				buf := new(bytes.Buffer)
 				for _, r := range utf16le {
@@ -46,7 +46,7 @@ func getCommand(params CommandParams) string {
 				cmd.Command = fmt.Sprintf("powershell -e %s", b64)
 			}
 
-			return fmt.Sprintf(cmd.Command)
+			return cmd.Command
 		}
 	}
 	return ""
