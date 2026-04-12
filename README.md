@@ -45,6 +45,25 @@ revshell sink 10.10.14.20 9001
 
 For more control, use the `custom` command. It uses a clean, positional argument syntax and fully supports **intelligent tab-completion**. You can also mix and match positional arguments with traditional flags (`-t`, `-p`, `-e`, etc.)!
 
+To enable tab completions in your current session:
+```bash
+source <(revshell completion bash) # For Bash
+# source <(revshell completion zsh) # For Zsh
+```
+
+To install completions permanently (load on startup):
+```bash
+# Bash
+revshell completion bash >> ~/.bashrc
+
+# Zsh
+# Zsh relies on a custom completions directory structure in your fpath
+mkdir -p ~/.zsh_completions
+revshell completion zsh > ~/.zsh_completions/_revshell
+echo 'fpath=(~/.zsh_completions $fpath)' >> ~/.zshrc
+echo 'autoload -U compinit; compinit' >> ~/.zshrc
+```
+
 ```bash
 # Syntax (positional)
 revshell custom <type> [method] [ip] [port] [shell] [encoding]
