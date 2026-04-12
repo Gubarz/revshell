@@ -1,6 +1,6 @@
 package main
 
-import "github.com/gubarz/revshell/cmd"
+import "github.com/Gubarz/revshell/cmd"
 
 func main() {
 	cmd.Execute()

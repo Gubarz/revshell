@@ -1,80 +1,87 @@
 # revshell
 
-Generate revshells in your terminal
+A simplified yet exceptionally powerful reverse shell generator for your terminal.
 
 ## Installation
 
 ```bash
-go install -v github.com/gubarz/revshell@latest
+go install -v github.com/Gubarz/revshell@latest
 ```
 
 ## Usage
 
 ### Interactive Mode
 
-The easiest way to generate a reverse shell is using the interactive mode:
+The easiest way to generate a reverse shell is to use the interactive TUI. It will guide you through selecting a shell type, payload method, IP address, port, and shell configuration.
 
 ```bash
 revshell generate
 ```
 
-This will guide you through selecting a shell type, method, IP address, port, and other options.
+![Interactive Mode](assets/revshell.png)
 
 ### Direct Shell Commands
-For quick access to common shells:
+
+For extremely fast, single-line executions, `revshell` bundles quick commands for common environments:
 
 ```bash
 # Basic bash reverse shell
 revshell bash
 
-# PowerShell reverse shell with default port
-revshell powershell 10.10.14.20
+# PowerShell reverse shell with a specific listener
+revshell powershell 10.10.14.20 9001
 
-# Python reverse shell with base64 encoding
-revshell python 10.10.14.20 4444 -e base64
+# Python reverse shell
+revshell python 10.10.14.20 4444
 
 # PHP reverse shell
-revshell php 10.10.14.20 4444
+revshell php 10.10.14.20
+
+# Kitchen Sink sh script (*nix) - Creates multiple payload types as a shell script
+revshell sink 10.10.14.20 9001
 ```
 
-### Custom Shell Generation
+### Scriptable Custom Shells
 
-For more control, use the custom command:
+For more control, use the `custom` command. It uses a clean, positional argument syntax and fully supports **intelligent tab-completion**. You can also mix and match positional arguments with traditional flags (`-t`, `-p`, `-e`, etc.)!
 
 ```bash
-# Generate a specific shell type and method
-revshell custom -t powershell -m base64 -i 10.10.14.20 -p 4444 -s powershell
+# Syntax (positional)
+revshell custom <type> [method] [ip] [port] [shell] [encoding]
 
-# Use tab completion to see available options
-revshell custom -t [TAB] -m [TAB]
+# Generate a base64 encoded powershell payload
+revshell custom powershell base64 10.10.14.20 4444 powershell base64
+
+# Mix positional arguments with explicit flags to override specific settings
+revshell custom python -p 8080 -e base64
+
+# Use tab completion to effortlessly explore available payloads
+# Example: type `revshell custom `, hit TAB, select `php`, space, hit TAB again!
+revshell custom [TAB] [TAB] [TAB]
 ```
 
 ### Utility Commands
 
 ```bash
-# Show system information (IPs and config)
+# Show system information (Identify your network interfaces & IP)
 revshell info
 
 # List available shell types
 revshell list types
 
-# List methods for a specific shell
+# List methods for a specific type
 revshell list methods bash
 
-# Create a config file
+# Create a sample config file
 revshell config
 ```
 
 ### Configuration
 
-You can create a configuration file to set default values:
+You can create a configuration file (`~/.config/revshell/config`) to set permanent default values saving you typing:
 
 ```bash
-# Create a sample config file
 revshell config
-
-# Edit the config file
-vim ~/.config/revshell/config
 ```
 
 Configuration options:
