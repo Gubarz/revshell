@@ -157,6 +157,11 @@ func (m tuiModel) renderMethodLine(method string, isCursor, isSelected bool, wid
 
 // --- Right panel: preview ---
 
+type previewLine struct {
+	content    string
+	isOriginal bool
+}
+
 func (m tuiModel) renderPreview(width, height int) string {
 	preview := sanitizePreviewText(m.getPreview())
 
@@ -165,19 +170,49 @@ func (m tuiModel) renderPreview(width, height int) string {
 		header = dimStyle.Render("no selection")
 	}
 
-	// Budget: header(1) + blank(1) + headroom(1) = 3 lines of overhead.
+	lineNumWidth := 4
+	contentWidth := max(1, width-lineNumWidth)
+
 	maxLines := max(1, height-3)
 
-	// Build and truncate all lines to prevent wrapping.
-	allLines := splitAndTruncate(preview, width)
-	totalLines := len(allLines)
+	allLines := splitPreview(preview, contentWidth)
+	totalLines := 0
+	for _, l := range allLines {
+		if l.isOriginal {
+			totalLines++
+		}
+	}
 
-	// Apply scroll offset.
-	start, end := clampScrollWindow(totalLines, maxLines, m.previewScroll)
+	start, end := clampScrollWindow(len(allLines), maxLines, m.previewScroll)
 	visibleLines := allLines[start:end]
 
+	trueLineNum := 0
+	for _, l := range allLines[:start] {
+		if l.isOriginal {
+			trueLineNum++
+		}
+	}
+
+	var b strings.Builder
+	for _, pl := range visibleLines {
+		if pl.isOriginal {
+			trueLineNum++
+			numStr := fmt.Sprintf("%d", trueLineNum)
+			padding := lineNumWidth - len(numStr)
+			if padding < 1 {
+				padding = 1
+			}
+			b.WriteString(numStr)
+			b.WriteString(strings.Repeat(" ", padding))
+		} else {
+			b.WriteString(strings.Repeat(" ", lineNumWidth))
+		}
+		b.WriteString(pl.content)
+		b.WriteString("\n")
+	}
+
 	scrollInfo := scrollInfoText(totalLines, maxLines, end)
-	return header + scrollInfo + "\n\n" + strings.Join(visibleLines, "\n")
+	return header + scrollInfo + "\n\n" + b.String()
 }
 
 // --- Help bar ---
@@ -206,15 +241,38 @@ func (m tuiModel) renderHelp() string {
 
 // --- Utility functions ---
 
-// splitAndTruncate splits text by newlines, expands tabs, and truncates each line.
-func splitAndTruncate(text string, maxWidth int) []string {
+// splitPreview splits text by newlines, expands tabs, and wraps long lines.
+func splitPreview(text string, maxWidth int) []previewLine {
 	raw := strings.Split(text, "\n")
-	lines := make([]string, 0, len(raw))
+	lines := make([]previewLine, 0, len(raw))
 	for _, line := range raw {
 		line = strings.ReplaceAll(line, "\t", "    ")
-		lines = append(lines, truncate(line, maxWidth))
+		wrapped := wrapLine(line, maxWidth)
+		lines = append(lines, wrapped...)
 	}
 	return lines
+}
+
+// wrapLine wraps a line to maxWidth, returning previewLine structs.
+func wrapLine(line string, maxWidth int) []previewLine {
+	if maxWidth <= 0 {
+		return []previewLine{{content: "", isOriginal: true}}
+	}
+	runes := []rune(line)
+	if len(runes) <= maxWidth {
+		return []previewLine{{content: line, isOriginal: true}}
+	}
+	var result []previewLine
+	first := true
+	for len(runes) > maxWidth {
+		result = append(result, previewLine{content: string(runes[:maxWidth]), isOriginal: first})
+		first = false
+		runes = runes[maxWidth:]
+	}
+	if len(runes) > 0 {
+		result = append(result, previewLine{content: string(runes), isOriginal: first})
+	}
+	return result
 }
 
 // clampScrollWindow returns the [start, end) range for a scroll window.
